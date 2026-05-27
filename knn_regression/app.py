@@ -8,6 +8,9 @@ st.set_page_config(page_title="Titanic KNN Regressor", layout="wide")
 
 @st.cache_resource
 def load_artifacts(models_dir="models"):
+	if not os.path.isabs(models_dir):
+		models_dir = os.path.join(os.path.dirname(__file__), models_dir)
+
 	model_path = os.path.join(models_dir, "knn_reg_model.pkl")
 	scaler_path = os.path.join(models_dir, "scaler.pkl")
 	feature_names_path = os.path.join(models_dir, "feature_names.pkl")
