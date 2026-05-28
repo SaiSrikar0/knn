@@ -4,16 +4,56 @@ from pathlib import Path
 import joblib
 import pandas as pd
 import streamlit as st
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 
 MODEL_PATH = Path(__file__).with_name("knn_rain_model.pkl")
+DATA_PATH = Path(__file__).with_name("weather_forecast_data.csv")
+FEATURES = ["Temperature", "Humidity", "Wind_Speed", "Cloud_Cover", "Pressure"]
+
+
+def train_model_from_csv():
+    df = pd.read_csv(DATA_PATH)
+    X = df[FEATURES]
+    y = df["Rain"]
+
+    numeric_pipeline = Pipeline(
+        steps=[
+            ("imputer", SimpleImputer(strategy="median")),
+            ("scaler", StandardScaler()),
+        ]
+    )
+    preprocessor = ColumnTransformer(
+        transformers=[("num", numeric_pipeline, FEATURES)]
+    )
+
+    model = KNeighborsClassifier(n_neighbors=7)
+    clf = Pipeline(
+        steps=[
+            ("preprocess", preprocessor),
+            ("model", model),
+        ]
+    )
+    clf.fit(X, y)
+    return clf
 
 
 @st.cache_resource
 def load_model():
     if not MODEL_PATH.exists():
-        return None
-    return joblib.load(MODEL_PATH)
+        return train_model_from_csv()
+
+    try:
+        return joblib.load(MODEL_PATH)
+    except Exception as exc:
+        st.warning(
+            f"Saved model could not be loaded in this environment. Training from CSV instead. ({exc.__class__.__name__})"
+        )
+        return train_model_from_csv()
 
 
 def build_input_df(temperature, humidity, wind_speed, cloud_cover, pressure):
