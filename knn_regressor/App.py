@@ -54,7 +54,7 @@ def load_model():
 
 
 def load_options():
-    if not os.path.exists(DATA_PATH):
+    if not DATA_PATH.exists():
         return ["female", "male"], ["no", "yes"], ["southwest", "southeast", "northwest", "northeast"]
     df = pd.read_csv(DATA_PATH)
     sexes = sorted(df["sex"].dropna().unique().tolist())
