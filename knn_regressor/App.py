@@ -1,20 +1,56 @@
-"""Streamlit app to predict insurance charges using a saved KNN model."""
-import os
+"""Streamlit app to predict insurance charges using a KNN regressor trained from CSV."""
+from pathlib import Path
 
-import joblib
 import pandas as pd
 import streamlit as st
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.neighbors import KNeighborsRegressor
 
 
-MODEL_PATH = "knn_insurance_model.pkl"
-DATA_PATH = "insurance.csv"
+DATA_PATH = Path(__file__).with_name("insurance.csv")
+FEATURES = ["age", "sex", "bmi", "children", "smoker", "region"]
+NUMERIC_FEATURES = ["age", "bmi", "children"]
+CATEGORICAL_FEATURES = ["sex", "smoker", "region"]
+
+
+def train_model_from_csv():
+    df = pd.read_csv(DATA_PATH)
+    X = df[FEATURES]
+    y = df["charges"]
+
+    numeric_pipeline = Pipeline(
+        steps=[
+            ("imputer", SimpleImputer(strategy="median")),
+            ("scaler", StandardScaler()),
+        ]
+    )
+
+    categorical_pipeline = Pipeline(
+        steps=[
+            ("imputer", SimpleImputer(strategy="most_frequent")),
+            ("encoder", OneHotEncoder(handle_unknown="ignore")),
+        ]
+    )
+
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ("num", numeric_pipeline, NUMERIC_FEATURES),
+            ("cat", categorical_pipeline, CATEGORICAL_FEATURES),
+        ]
+    )
+
+    model = KNeighborsRegressor(n_neighbors=7)
+    regressor = Pipeline(steps=[("preprocess", preprocessor), ("model", model)])
+    regressor.fit(X, y)
+    return regressor
 
 
 @st.cache_resource
 def load_model():
-    if not os.path.exists(MODEL_PATH):
-        return None
-    return joblib.load(MODEL_PATH)
+    return train_model_from_csv()
 
 
 def load_options():
