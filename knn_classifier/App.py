@@ -1,7 +1,6 @@
 """Streamlit app to predict rain or no rain using a saved KNN model."""
 from pathlib import Path
 
-import joblib
 import pandas as pd
 import streamlit as st
 from sklearn.compose import ColumnTransformer
@@ -11,7 +10,6 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 
-MODEL_PATH = Path(__file__).with_name("knn_rain_model.pkl")
 DATA_PATH = Path(__file__).with_name("weather_forecast_data.csv")
 FEATURES = ["Temperature", "Humidity", "Wind_Speed", "Cloud_Cover", "Pressure"]
 
@@ -44,16 +42,7 @@ def train_model_from_csv():
 
 @st.cache_resource
 def load_model():
-    if not MODEL_PATH.exists():
-        return train_model_from_csv()
-
-    try:
-        return joblib.load(MODEL_PATH)
-    except Exception as exc:
-        st.warning(
-            f"Saved model could not be loaded in this environment. Training from CSV instead. ({exc.__class__.__name__})"
-        )
-        return train_model_from_csv()
+    return train_model_from_csv()
 
 
 def build_input_df(temperature, humidity, wind_speed, cloud_cover, pressure):
