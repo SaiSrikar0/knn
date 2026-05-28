@@ -1,17 +1,17 @@
 """Streamlit app to predict rain or no rain using a saved KNN model."""
-import os
+from pathlib import Path
 
 import joblib
 import pandas as pd
 import streamlit as st
 
 
-MODEL_PATH = "knn_rain_model.pkl"
+MODEL_PATH = Path(__file__).with_name("knn_rain_model.pkl")
 
 
 @st.cache_resource
 def load_model():
-    if not os.path.exists(MODEL_PATH):
+    if not MODEL_PATH.exists():
         return None
     return joblib.load(MODEL_PATH)
 
